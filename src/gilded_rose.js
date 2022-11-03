@@ -3,69 +3,99 @@ class Item {
     this.name = name;
     this.sellIn = sellIn;
     this.quality = quality;
+    this.maxQuality = 50
+    this.minQuality = 0
+  }
+
+  decreaseSellIn(){
+    this.sellIn -= 1
+  }
+
+  decreaseQuality(factor = 1){
+    this.quality = Math.max(this.quality - factor, this.minQuality)
+  }
+
+  increaseQuality(factor = 1){
+    this.quality = Math.min(this.quality + factor, this.maxQuality)
+  }
+
+  isExpired(){
+    return this.sellIn < 0
   }
 }
 
+/**
+ * Performs a deep copy for each item in the list
+ */
+function copyItems(items){
+  // Why Js just why...
+  return items.map((it) => {return Object.assign(
+    Object.create(Object.getPrototypeOf(it))
+    , it)})
+}
 class Shop {
-  constructor(items = []) {
-    this.items = items;
+  // we need a deep copy when testing to compare old and previous value
+  constructor(items = [], copy = false) {
+    if (copy){
+      this.items = copyItems(items)
+    }
+    else{
+      this.items = items;
+    }
   }
+
   updateQuality() {
-    for (let i = 0; i < this.items.length; i++) {
-      if (
-        this.items[i].name !== "Aged Brie" &&
-        this.items[i].name !== "Backstage passes to a TAFKAL80ETC concert"
-      ) {
-        if (this.items[i].quality > 0) {
-          if (this.items[i].name !== "Sulfuras, Hand of Ragnaros") {
-            this.items[i].quality = this.items[i].quality - 1;
-          }
+    for (const item of this.items){
+      if(item.name === "Sulfuras, Hand of Ragnaros"){
+        continue
+      }
+
+      item.decreaseSellIn()
+
+      if(item.name === "Aged Brie"){
+        item.increaseQuality(1)
+        continue
+      }
+
+      if(item.name === "Backstage passes to a TAFKAL80ETC concert"){
+        if(item.isExpired()){
+          item.quality = 0
+          continue
         }
-      } else {
-        if (this.items[i].quality < 50) {
-          this.items[i].quality = this.items[i].quality + 1;
-          if (
-            this.items[i].name === "Backstage passes to a TAFKAL80ETC concert"
-          ) {
-            if (this.items[i].sellIn < 11) {
-              if (this.items[i].quality < 50) {
-                this.items[i].quality = this.items[i].quality + 1;
-              }
-            }
-            if (this.items[i].sellIn < 6) {
-              if (this.items[i].quality < 50) {
-                this.items[i].quality = this.items[i].quality + 1;
-              }
-            }
-          }
+
+        if(item.sellIn <= 5){
+          item.increaseQuality(3)
+          continue
+        }
+
+        if(item.sellIn <= 10){
+          item.increaseQuality(2)
+          continue
+        }
+
+        item.increaseQuality(1)
+        continue
+      }
+
+      if(item.name === "Conjured Mana Cake"){
+        if (item.isExpired()) {
+          item.decreaseQuality(4)
+        }
+        else {
+          item.decreaseQuality(2)
         }
       }
-      if (this.items[i].name !== "Sulfuras, Hand of Ragnaros") {
-        this.items[i].sellIn = this.items[i].sellIn - 1;
-      }
-      if (this.items[i].sellIn < 0) {
-        if (this.items[i].name !== "Aged Brie") {
-          if (
-            this.items[i].name !== "Backstage passes to a TAFKAL80ETC concert"
-          ) {
-            if (this.items[i].quality > 0) {
-              if (this.items[i].name !== "Sulfuras, Hand of Ragnaros") {
-                this.items[i].quality = this.items[i].quality - 1;
-              }
-            }
-          } else {
-            this.items[i].quality =
-              this.items[i].quality - this.items[i].quality;
-          }
-        } else {
-          if (this.items[i].quality < 50) {
-            this.items[i].quality = this.items[i].quality + 1;
-          }
+      else{
+        if (item.isExpired()) {
+          item.decreaseQuality(2)
+        }
+        else {
+          item.decreaseQuality(1)
         }
       }
     }
 
-    return this.items;
+    return copyItems(this.items)
   }
 }
 
